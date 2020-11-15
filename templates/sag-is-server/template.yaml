@@ -29,35 +29,105 @@ environments:
     is.memory.init:     128                             # Initial memory size
     is.memory.max:      256                             # Maximum memory size
     is.install.service: false
-    is.fixes:           ALL
+    is.fixes:
+      - wMFix.integrationServer.ART
+      - wMFix.integrationServer.Core
+      - wMFix.integrationServer.FlatFile
+      - wMFix.integrationServer.SPM
+      - wMFix.jdbcAdapter
+    
+    is.instance.build.name:             "BUILD"
+    is.instance.build.primary.port:     5555
+    is.instance.build.diagnostic.port:  9955
+    is.instance.build.jmx.port:         8055
+    is.instance.build.memory.init:      256
+    is.instance.build.memory.max:       256
+    
+    is.instance.test.name:              "TEST"
+    is.instance.test.primary.port:      5566
+    is.instance.test.diagnostic.port:   9966
+    is.instance.test.jmx.port:          8066
+    is.instance.test.memory.init:       256
+    is.instance.test.memory.max:          256
+
+    is.instance.sit.name:               "SIT"
+    is.instance.sit.primary.port:       5577
+    is.instance.sit.diagnostic.port:    9977
+    is.instance.sit.jmx.port:           8077
+    is.instance.sit.memory.init:        256
+    is.instance.sit.memory.max:         256
 
 layers:
   runtime:
     productRepo: ${repo.product}
     fixRepo:     ${repo.fix}
     templates:
+      - spm-tuneup
       - is-server        
 
 templates:
+  spm-tuneup:
+    description: SPM customizations
+    fixes: [wMFix.SPM]
+    products:
+      SPM:
+
   is-server:
     licenses:
       "IntegrationServer/config/licenseKey.xml": "${is.integrationserver.license.key}"
     fixes: ${is.fixes}
     products:
+      ACDLDeployerSharedBundle:
+      Deployer:
+      GWM_IS:
+      GWMCommonLibs:
+      jdbcAdapter:
       integrationServer:
-        ${is.instance.name}: 
-          primary.port:    ${is.primary.port}
-          diagnostic.port: ${is.diagnostic.port}
-          jmx.port:        ${is.jmx.port}
+        ${is.instance.build.name}:
+          primary.port:    ${is.instance.build.primary.port}
+          diagnostic.port: ${is.instance.build.diagnostic.port}
+          jmx.port:        ${is.instance.build.jmx.port}
           license.file:    IntegrationServer/config/licenseKey.xml
           install.service: ${is.install.service}
+          package.list:    WmBrokerDeployer, WmNUMDeployer, WmDeployer
           configuration:
-            OSGI-IS_${instance.name}:
+            OSGI-IS_${is.instance.build.name}:
               COMMON-MEMORY:
                 COMMON-MEMORY:
-                  InitSize: ${is.memory.init}
-                  MaxSize:  ${is.memory.max}
-           
+                  InitSize: ${is.instance.build.memory.init}
+                  MaxSize:  ${is.instance.build.memory.max}
+            integrationServer-${is.instance.build.name}:
+            
+        ${is.instance.test.name}:
+          primary.port:    ${is.instance.test.primary.port}
+          diagnostic.port: ${is.instance.test.diagnostic.port}
+          jmx.port:        ${is.instance.test.jmx.port}
+          license.file:    IntegrationServer/config/licenseKey.xml
+          install.service: ${is.install.service}
+          package.list:    WmServiceMock
+          configuration:
+            OSGI-IS_${is.instance.test.name}:
+              COMMON-MEMORY:
+                COMMON-MEMORY:
+                  InitSize: ${is.instance.test.memory.init}
+                  MaxSize:  ${is.instance.test.memory.max}
+            integrationServer-${is.instance.test.name}:
+            
+        ${is.instance.sit.name}:
+          primary.port:    ${is.instance.sit.primary.port}
+          diagnostic.port: ${is.instance.sit.diagnostic.port}
+          jmx.port:        ${is.instance.sit.jmx.port}
+          license.file:    IntegrationServer/config/licenseKey.xml
+          install.service: ${is.install.service}
+          package.list:    WmJDBCAdapter
+          configuration:
+            OSGI-IS_${is.instance.sit.name}:
+              COMMON-MEMORY:
+                COMMON-MEMORY:
+                  InitSize: ${is.instance.sit.memory.init}
+                  MaxSize:  ${is.instance.sit.memory.max}
+            integrationServer-${is.instance.sit.name}:
+
 provision:
   default:
     runtime: ${nodes}
